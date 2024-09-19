@@ -3,6 +3,8 @@ package com.example.userservice.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Date;
+
 
 @Getter
 @Setter
@@ -28,6 +30,9 @@ public class Token {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "duration")
+    private Date duration;
 
 
 

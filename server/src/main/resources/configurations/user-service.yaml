@@ -12,14 +12,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
 logging:
   level:
     org:
       springframework:
         security: TRACE
-jwt:
-  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-  expiration: 864000000
 eureka:
   client:
     serviceUrl:
@@ -30,3 +28,4 @@ app:
     tokenSecret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
     tokenExpirationMsec: 86400000
     refreshExpirationMsec: 864000000
+    authorizedRedirectUris: http://localhost:8080/api/users/oauth2/redirect,http://localhost:8080/api/users/,http://localhost:8080/api/users/oauth2/redirect

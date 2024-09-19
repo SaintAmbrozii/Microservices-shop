@@ -7,6 +7,7 @@ import com.example.userservice.repository.TokenRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TokenService {
@@ -15,6 +16,10 @@ public class TokenService {
 
     public TokenService(TokenRepo tokenRepo) {
         this.tokenRepo = tokenRepo;
+    }
+
+    public Optional<Token> findByToken(String token) {
+        return tokenRepo.findByToken(token);
     }
 
     public void saveToken(User user, String jwt){
@@ -38,5 +43,9 @@ public class TokenService {
         });
 
         tokenRepo.saveAll(allValidTokenByUser);
+    }
+
+    public void deleteToken(Long id) {
+        tokenRepo.deleteById(id);
     }
 }

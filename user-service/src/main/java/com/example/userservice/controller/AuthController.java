@@ -4,14 +4,17 @@ package com.example.userservice.controller;
 
 import com.example.userservice.domain.AuthProvider;
 import com.example.userservice.domain.Role;
+import com.example.userservice.domain.Token;
 import com.example.userservice.domain.User;
 import com.example.userservice.payload.ApiResponse;
 import com.example.userservice.payload.LoginRequest;
 import com.example.userservice.payload.SignUpRequest;
 import com.example.userservice.payload.TokenResponse;
+import com.example.userservice.security.LogoutService;
 import com.example.userservice.security.jwt.TokenProvider;
 import com.example.userservice.service.TokenService;
 import com.example.userservice.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +32,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Optional;
 
 @RestController
@@ -41,15 +47,17 @@ public class AuthController {
     private final TokenProvider tokenProvider;
     private final PasswordEncoder encoder;
     private final TokenService tokenService;
+    private final LogoutService logoutService;
 
     public AuthController(AuthenticationManager authenticationManager, UserService userService,
                           TokenProvider tokenProvider, PasswordEncoder encoder,
-                          TokenService tokenService) {
+                          TokenService tokenService, LogoutService logoutService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.tokenProvider = tokenProvider;
         this.encoder = encoder;
         this.tokenService = tokenService;
+        this.logoutService = logoutService;
     }
 
 
@@ -69,7 +77,7 @@ public class AuthController {
         String accessToken = tokenProvider.createToken(authentication);
         String refreshToken = tokenProvider.createRefreshToken(authentication);
         TokenResponse tokenResponse = TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
- //       tokenService.saveToken(user, refreshToken);
+        tokenService.saveToken(user, refreshToken);
         return ResponseEntity.ok(tokenResponse);
     }
 
@@ -102,10 +110,19 @@ public class AuthController {
                 .body(new ApiResponse(true, "User registered successfully!"));
     }
 
- //   @PostMapping("refresh")
- //   public ResponseEntity<TokenResponse> getRefreshToken(@RequestBody String token) {
- //       return tokenService.
- //   }
+
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> getRefreshToken(@RequestBody String token) {
+        Optional<Token> inDb = tokenService.findByToken(token);
+        Token currentToken = inDb.get();
+        if (Date.from(Instant.now()).after(currentToken.getDuration())) {
+            tokenService.deleteToken(currentToken.getId());
+        }
+        String refreshToken = currentToken.getToken();
+        TokenResponse response = TokenResponse.builder().refreshToken(refreshToken).accessToken(null).build();
+        return ResponseEntity.ok(response);
+    }
 
 
 
