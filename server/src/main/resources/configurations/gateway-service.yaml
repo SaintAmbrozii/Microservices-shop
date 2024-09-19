@@ -1,0 +1,35 @@
+server:
+  port: 8080
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - AuthenticationFilter
+
+
+        - id: PRODUCT-SERVICE
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - AuthenticationFilter
+      discovery:
+        locator:
+          enabled: true
+
+jwt:
+  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.web.access.ExceptionTranslationFilter: DEBUG
+    org.springframework.security.web.FilterChainProxy: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.security.web.access.intercept.FilterSecurityInterceptor: DEBUG
+    org.springframework.security.access.intercept.AbstractSecurityInterceptor: DEBUG
