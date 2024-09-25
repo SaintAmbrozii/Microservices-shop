@@ -19,4 +19,20 @@ CREATE TABLE IF NOT EXISTS product
     sale_price numeric(8,2),
     category_id bigint
         CONSTRAINT fk_category REFERENCES category
+
 );
+
+CREATE TABLE IF NOT EXISTS images
+(
+    id BIGSERIAL PRIMARY KEY,
+    name varchar(255),
+    uri varchar(255)
+
+);
+
+
+
+
+
+
+

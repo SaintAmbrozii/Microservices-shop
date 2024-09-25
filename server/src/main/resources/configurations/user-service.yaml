@@ -13,6 +13,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+kafka:
+  bootstrapAddress: kafka:9092
+
 logging:
   level:
     org:

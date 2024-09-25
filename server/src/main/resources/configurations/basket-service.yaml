@@ -1,0 +1,31 @@
+server:
+  port: 8060
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/basket
+    username: postgres
+    password: bestuser
+    driver-class-name: org.postgresql.Driver
+    jpa:
+      hibernate:
+        ddl-auto: update
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+
+kafka:
+  bootstrapAddress: kafka:9092
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+services:
+  product:
+    uri: http://localhost:8050

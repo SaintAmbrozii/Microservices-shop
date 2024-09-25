@@ -31,3 +31,5 @@ logging:
     org:
       springframework:
         security: TRACE
+kafka:
+  bootstrapAddress: kafka:9092

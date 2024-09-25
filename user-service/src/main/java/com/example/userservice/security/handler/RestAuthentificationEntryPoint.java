@@ -1,4 +1,4 @@
-package com.example.userservice.security;
+package com.example.userservice.security.handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +13,7 @@ import java.io.IOException;
 public class RestAuthentificationEntryPoint implements AuthenticationEntryPoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAuthentificationEntryPoint.class);
+
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException e) throws IOException, ServletException {
         LOGGER.error("Responding with unauthorized error. Message - {}", e.getMessage());

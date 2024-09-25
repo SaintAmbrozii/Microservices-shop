@@ -1,4 +1,4 @@
-package com.example.userservice.security;
+package com.example.userservice.security.logout;
 
 
 import com.example.userservice.domain.Token;

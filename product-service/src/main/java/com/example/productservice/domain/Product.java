@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -34,6 +36,18 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+
+    @Transient
+    public void addQuantity(int amount) {
+        quantity += amount;
+    }
+
+    @Transient
+    public void decreaseQuantity(int amount) {
+        quantity -= amount;
+    }
+
 
     @Override
     public boolean equals(Object o) {

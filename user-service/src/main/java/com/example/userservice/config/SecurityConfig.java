@@ -2,7 +2,7 @@ package com.example.userservice.config;
 
 
 
-import com.example.userservice.security.LogoutService;
+import com.example.userservice.security.logout.LogoutService;
 import com.example.userservice.security.jwt.TokenAuthentificationFilter;
 import com.example.userservice.security.jwt.TokenProvider;
 import com.example.userservice.security.oauht2.HttpCookieOAuth2AuthorizationRequestRepository;

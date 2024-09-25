@@ -10,11 +10,12 @@ import com.example.productservice.payload.ProductResponse;
 import com.example.productservice.repo.ProductRepo;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -22,10 +23,12 @@ public class ProductService {
 
     private final ProductMapper mapper;
     private final ProductRepo productRepo;
+    private final KafkaTemplate<String, ProductPurchaseResponse> kafkaTemplate;
 
-    public ProductService(ProductMapper mapper, ProductRepo productRepo) {
+    public ProductService(ProductMapper mapper, ProductRepo productRepo, KafkaTemplate<String, ProductPurchaseResponse> kafkaTemplate) {
         this.mapper = mapper;
         this.productRepo = productRepo;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public ProductResponse findById(Long productId) {
@@ -48,51 +51,49 @@ public class ProductService {
         return productRepo.save(product);
     }
 
-    public List<ProductPurchaseResponse> purchaseProduct(
-            List<ProductPurchaseRequest> requestList
-    ) {
-        var productIds = requestList
-                .stream()
-                .map(ProductPurchaseRequest::productId)
-                .toList();
 
+    public ProductPurchaseResponse addProductToBasket(ProductPurchaseRequest request) {
+        Optional<Product> product = productRepo.findById(request.productId());
+        var inStock = product.get();
+        if (inStock.getQuantity()<= request.quantity()) {
 
-        List<Product> storedProducts = productRepo.findByListOfIds(productIds);
-
-        if(productIds.size() != storedProducts.size()){
+            inStock.decreaseQuantity(request.quantity());
+            productRepo.save(inStock);
+        }else {
             throw new ProductPurchaseRequestException(
-                    "One or more product does not exists"
-            );
+                    "Insufficient stock quantity for product ID:: "
+                            + request.productId());
         }
-        var sortedRequests = requestList
-                .stream()
-                .sorted(Comparator.comparing(ProductPurchaseRequest::productId))
-                .toList();
-
-        var sortedProducts = storedProducts
-                .stream()
-                .sorted(Comparator.comparing(Product::getId))
-                .toList();
-
-        var purchasedProducts = new ArrayList<ProductPurchaseResponse>();
-
-        for(int i=0; i < sortedProducts.size(); i++){
-            var product = sortedProducts.get(i);
-            var productRequest = sortedRequests.get(i);
-            if(product.getQuantity() < productRequest.quantity()) {
-                throw new ProductPurchaseRequestException(
-                        "Insufficient stock quantity for product ID:: "
-                                + productRequest.productId()
-                );
-            }
-            var newAvailableQuantity = product.getQuantity() - productRequest.quantity();
-            product.setQuantity(newAvailableQuantity);
-            productRepo.save(product);
-            purchasedProducts.add(
-                    mapper.toProductPurchaseResponse(product, productRequest.quantity())
-            );
-        }
-
-        return purchasedProducts;
+        return mapper.toProductPurchaseResponse(inStock, request.quantity());
     }
+    @KafkaListener(topics = "product-topic", groupId = "group0")
+    public void listenShopTopic(ProductPurchaseRequest request) {
+        log.info("basket received on topic: {}", request.productId());
+
+
+        Product product = productRepo.findById(request.productId()).orElseThrow();
+        if (!isValidShop(request, product)) {
+            ProductPurchaseResponse response = ProductPurchaseResponse.builder().build();
+            shopError(response);
+        } else {
+            ProductPurchaseResponse response = ProductPurchaseResponse.builder().build();
+            shopSuccess(response);
+        }
+
+    }
+
+    private boolean isValidShop(ProductPurchaseRequest request, Product product) {
+        return product != null && product.getQuantity() >= request.quantity();
+    }
+
+    private void shopError(ProductPurchaseResponse response) {
+        log.info("Add basket processing error {}.", response.getProductId());
+        kafkaTemplate.send("product-basket-topic", response);
+    }
+
+    private void shopSuccess(ProductPurchaseResponse response) {
+        log.info("Add basket successfully completed {}.", response.getProductId());
+        kafkaTemplate.send("product-basket-topic", response);
+    }
+
 }
